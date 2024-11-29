@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liste des Documents</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-top: 20px;
+    }
+
+    .document-category {
+      background-color: #fff;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      color: #007BFF;
+      margin-bottom: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    a {
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+      transition: color 0.3s;
+    }
+
+    a:hover {
+      color: #007BFF;
+    }
+
+    .space-buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    input[type="file"] {
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Liste des Documents</h1>
+
+  <!-- Boutons pour basculer entre les espaces -->
+  <div class="space-buttons">
+    <button id="btn-etudiant" onclick="showDocuments('etudiant')">Espace Étudiant</button>
+    <button id="btn-enseignant" onclick="showDocuments('enseignant')">Espace Enseignant</button>
+  </div>
+
+  <div id="documents-container"></div>
+
+  <script>
+    // Données des fichiers
+    const files = {
+      "etudiant": [
+        { name: "LatestAzure.png", url: "https://gestiondoc.blob.core.windows.net/documents-classes/LatestAZURE.png?sp=r&st=2024-11-27T17:02:32Z&se=2024-11-29T01:02:32Z&spr=https&sv=2022-11-02&sr=b&sig=1HwKeuI%2BiTxKOa6euv57SVt78%2BsVzD18yCGwZVQzn3U%3D" },
+        { name: "TESTexecuter.png", url: "https://gestiondoc.blob.core.windows.net/documents-classes/TESTexecuter.png?sp=r&st=2024-11-28T10:50:17Z&se=2024-11-30T18:50:17Z&spr=https&sv=2022-11-02&sr=b&sig=VsC4ACWvQ2l4xj77oIKudjUMDRXXdKPoUQc%2FpKcECDo%3D" }
+      ],
+      "enseignant": [
+        { name: "TD DATAWAREHOUSE NEW.pdf", url: "https://gestiondoc.blob.core.windows.net/documents-enseignants/TD%20DATAWAREHOUSE%20NEW.pdf?sp=r&st=2024-11-28T10:43:18Z&se=2024-11-30T18:43:18Z&spr=https&sv=2022-11-02&sr=b&sig=4LVqR3gDdCuFe5azNDB3EDEWFTX%2FcCcLAELDRq7gkac%3D" },
+        { name: "Introduction vers les Big Data et chapitre 1.pdf", url: "https://gestiondoc.blob.core.windows.net/documents-enseignants/Introduction%20vers%20les%20Big%20Data%20et%20chapitre%201.pdf?sp=r&st=2024-11-28T10:48:39Z&se=2024-11-30T18:48:39Z&spr=https&sv=2022-11-02&sr=b&sig=jEXVsqeFuKHVyHSdZD5M0GZLaP6QNqKw4SOM2oie7LE%3D" }
+      ]
+    };
+
+    // Fonction pour afficher les documents
+    function renderDocuments(category) {
+      const container = document.getElementById('documents-container');
+      container.innerHTML = ''; // Vider le contenu précédent si nécessaire
+
+      const categoryFiles = files[category];
+
+      categoryFiles.forEach((file) => {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.classList.add('document-category');
+        
+        const categoryTitle = document.createElement('h2');
+        categoryTitle.textContent = category === 'etudiant' ? 'Documents Étudiant' : 'Documents Enseignant';
+        categoryDiv.appendChild(categoryTitle);
+
+        const ul = document.createElement('ul');
+
+        const li = document.createElement('li');
+
+        // Lien vers le fichier
+        const link = document.createElement('a');
+        link.href = file.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = file.name;
+
+        li.appendChild(link);
+        ul.appendChild(li);
+
+        categoryDiv.appendChild(ul);
+        container.appendChild(categoryDiv);
+      });
+    }
+
+    // Fonction pour afficher les documents selon l'espace sélectionné
+    function showDocuments(space) {
+      document.getElementById('btn-etudiant').disabled = (space === 'etudiant');
+      document.getElementById('btn-enseignant').disabled = (space === 'enseignant');
+      renderDocuments(space);
+    }
+
+    // URL de base de l'API
+    const API_BASE_URL = "https://backend-documents-api-d9ehb3dfdzg4grey.francecentral-01.azurewebsites.net/"; // Remplacez par l'URL réelle
+
+    // Fonction pour rechercher des fichiers
+    async function fetchFiles() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/search`);
+        const files = await response.json();
+
+        const container = document.getElementById("documents-container");
+        container.innerHTML = ""; // Vider les anciens fichiers
+        files.forEach(file => {
+          const fileElement = document.createElement("div");
+          fileElement.innerHTML = `
+            <div>
+              <h3>${file.name}</h3>
+              <p>Dernière modification : ${new Date(file.lastModified).toLocaleString()}</p>
+            </div>
+          `;
+          container.appendChild(fileElement);
+        });
+      } catch (err) {
+        console.error("Erreur lors de la récupération des fichiers :", err);
+        alert("Impossible de récupérer les fichiers. Vérifiez l'API.");
+      }
+    }
+
+    // Fonction pour uploader un fichier
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+        const result = await response.json();
+        alert(result.message || "Fichier uploadé avec succès !");
+      } catch (err) {
+        console.error("Erreur lors de l'upload :", err);
+        alert("Impossible d'uploader le fichier.");
+      }
+    }
+
+    // Attacher des événements au chargement de la page
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchButton = document.createElement("button");
+      searchButton.textContent = "Rechercher des fichiers";
+      searchButton.onclick = fetchFiles;
+
+      const uploadInput = document.createElement("input");
+      uploadInput.type = "file";
+      uploadInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) uploadFile(file);
+      };
+
+      const spaceButtons = document.querySelector(".space-buttons");
+      spaceButtons.appendChild(searchButton);
+      spaceButtons.appendChild(uploadInput);
+    });
+
+    // Par défaut, afficher l'espace étudiant
+    window.onload = () => showDocuments('etudiant');
+  </script>
+</body>
+</html>
